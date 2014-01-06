@@ -2,10 +2,11 @@ function Scope() {
 	this.$$watchers = [];
 }
 
-Scope.prototype.$watch = function(watchFn, listenerFn) {
+Scope.prototype.$watch = function(watchFn, listenerFn, valueEq) {
   var watcher = {
     watchFn: watchFn,
-    listenerFn: listenerFn || function() { }
+    listenerFn: listenerFn || function() { },
+    valueEq: !!valueEq
   };
   this.$$watchers.push(watcher);
 };
@@ -28,11 +29,19 @@ Scope.prototype.$$digestOnce = function() {
   this.$$watchers.forEach(function(watcher) {
     var newValue = watcher.watchFn(self);
     var oldValue = watcher.last;
-    if (newValue !== oldValue) {
+    if (!self.$$areEqual(newValue, oldValue, watcher.valueEq)) {
       watcher.listenerFn(newValue, oldValue, self);
       dirty = true;
     }
-    watcher.last = newValue;
+    watcher.last = (watcher.valueEq ? _.cloneDeep(newValue) : newValue);
   });
   return dirty;
+};
+
+Scope.prototype.$$areEqual = function(newValue, oldValue, valueEq) {
+  if (valueEq) {
+    return _.isEqual(newValue, oldValue);
+  } else {
+    return newValue === oldValue;
+  }
 };
