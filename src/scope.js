@@ -2,6 +2,7 @@ function Scope() {
 	this.$$watchers = [];
   this.$$asyncQueue = [];
   this.$$postDigestQueue = [];
+  this.$$children = [];
   this.$$phase = null;
 }
 
@@ -20,7 +21,9 @@ Scope.prototype.$new = function() {
   var Child = function() { };
   Child.prototype = this;
   var child = new Child();
+  this.$$children.push(child);
   child.$$watchers = [];
+  child.$$children = [];
   return child;
 };
 
@@ -71,20 +74,21 @@ Scope.prototype.$digest = function() {
 };
 
 Scope.prototype.$$digestOnce = function() {
-  var self = this;
   var dirty;
-  this.$$watchers.forEach(function(watcher) {
-    try {
-      var newValue = watcher.watchFn(self);
-      var oldValue = watcher.last;
-      if (!self.$$areEqual(newValue, oldValue, watcher.valueEq)) {
-        watcher.listenerFn(newValue, oldValue, self);
-        dirty = true;
-        watcher.last = (watcher.valueEq ? _.cloneDeep(newValue) : newValue);
+  this.$$forEachScope(function(scope) {
+    scope.$$watchers.forEach(function(watcher) {
+      try {
+        var newValue = watcher.watchFn(scope);
+        var oldValue = watcher.last;
+        if (!scope.$$areEqual(newValue, oldValue, watcher.valueEq)) {
+          watcher.listenerFn(newValue, oldValue, scope);
+          dirty = true;
+          watcher.last = (watcher.valueEq ? _.cloneDeep(newValue) : newValue);
+        }
+      } catch (e) {
+        console.error(e);
       }
-    } catch (e) {
-      console.error(e);
-    }
+    });
   });
   return dirty;
 };
@@ -97,6 +101,13 @@ Scope.prototype.$$areEqual = function(newValue, oldValue, valueEq) {
       (typeof newValue === 'number' && typeof oldValue === 'number' &&
        isNaN(newValue) && isNaN(oldValue));
   }
+};
+
+Scope.prototype.$$forEachScope = function(fn) { 
+  fn(this);
+  _.forEach(this.$$children, function(child) {
+    child.$$forEachScope(fn);
+  });
 };
 
 Scope.prototype.$eval = function(expr, locals) {
