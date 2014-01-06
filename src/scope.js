@@ -66,8 +66,8 @@ Scope.prototype.$$digestOnce = function() {
       if (!self.$$areEqual(newValue, oldValue, watcher.valueEq)) {
         watcher.listenerFn(newValue, oldValue, self);
         dirty = true;
+        watcher.last = (watcher.valueEq ? _.cloneDeep(newValue) : newValue);
       }
-      watcher.last = (watcher.valueEq ? _.cloneDeep(newValue) : newValue);
     } catch (e) {
       console.error(e);
     }
