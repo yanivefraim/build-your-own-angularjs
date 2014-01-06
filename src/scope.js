@@ -20,6 +20,7 @@ Scope.prototype.$new = function() {
   var Child = function() { };
   Child.prototype = this;
   var child = new Child();
+  child.$$watchers = [];
   return child;
 };
 
