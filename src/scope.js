@@ -18,10 +18,18 @@ Scope.prototype.$clearPhase = function() {
   this.$$phase = null;
 };
 
-Scope.prototype.$new = function() {
-  var Child = function() { };
-  Child.prototype = this;
-  var child = new Child();
+Scope.prototype.$new = function(isolated) {
+  var child;
+  if (isolated) {
+    child = new Scope();
+    child.$$root = this.$$root;
+    child.$$asyncQueue = this.$$asyncQueue;
+    child.$$postDigestQueue = this.$$postDigestQueue;
+  } else {
+    var Child = function() { };
+    Child.prototype = this;
+    child = new Child();
+  }
   this.$$children.push(child);
   child.$$watchers = [];
   child.$$children = [];
