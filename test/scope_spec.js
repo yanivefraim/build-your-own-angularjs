@@ -1038,6 +1038,21 @@ describe("Scope", function() {
       scope.$digest();
       expect(scope.counter).toBe(2);
     });
+
+    it("does not consider any object with a length property an array", function() {
+      scope.obj = {length: 42, otherKey: 'abc'};
+      var oldValueProvided;
+
+      scope.$watchCollection(
+        function(scope) { return scope.obj; },
+        function(newValue, oldValue, scope) {
+          oldValueProvided = oldValue;
+        }
+      );
+  
+      scope.$digest();
+      expect(oldValueProvided).toEqual({length: 42, otherKey: 'abc'});
+    });
     
   });
 
