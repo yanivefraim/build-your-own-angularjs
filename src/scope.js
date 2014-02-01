@@ -8,6 +8,7 @@ function Scope() {
   this.$$postDigestQueue = [];
   this.$$root = this;
   this.$$children = [];
+  this.$$listeners = {};
   this.$$phase = null;
 }
 
@@ -37,6 +38,7 @@ Scope.prototype.$new = function(isolated) {
   }
   this.$$children.push(child);
   child.$$watchers = [];
+  child.$$listeners = [];
   child.$$children = [];
   child.$parent = this;
   return child;
@@ -250,3 +252,12 @@ Scope.prototype.$destroy = function() {
     siblings.splice(indexOfThis, 1);
   }
 };
+
+Scope.prototype.$on = function(eventName, listener) {
+  var listeners = this.$$listeners[eventName];
+  if (!listeners) {
+    this.$$listeners[eventName] = listeners = [];
+  }
+  listeners.push(listener);
+};
+
